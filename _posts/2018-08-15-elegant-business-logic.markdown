@@ -1,12 +1,74 @@
 ---
 layout: post
-title: Verano - Dependency Injection without Magic
+title: Elegant Business Logic
 date: 2018-08-15 13:32:20 +0300
 description: You’ll find this post in your `_posts` directory. Go ahead and edit it and re-build the site to see your changes. # Add post description (optional)
 img: i-rest.jpg # Add image post (optional)
 fig-caption: # Add figcaption (optional)
-tags: [Dependency Injection, Java, OOP]
+tags: [Java, OOP, Business Logic]
 ---
+
+Imagine a method that contains a business logic. A method that depicts an use case
+in your system. How it will look like? My guess is that will probably contain
+some procedural steps backed up with decoupled parts of functionality such as services and
+repositories or some other objects. Something like this:
+```java
+public class ProceduralCase implements UseCase
+{
+    private static final String TOPIC = "payloads";
+
+    private final PayloadAdapter adapter;
+
+    private final Users users;
+
+    private final Kafka kafka;
+
+    @Override
+    public Payloads storePayloads(UserSource userSource, String message, String topic)
+    {
+        User user = fetchOrCreateUser(userSource);
+        Payloads payloads = adapter.convert(message);
+        for (Device device: user.devices()) {
+            device.storePayloads(payloads);
+        }
+        pushToKafka(topic, new CompressedPayloads(payloads));
+        return payloads;
+    }
+
+    private User fetchOrCreateUser(UserSource userSource)
+    {
+        String id = userSource.id();
+        User user;
+        if (this.users.exists(id)) {
+            user  = this.users.get(id);
+        } else {
+            user = this.users.create(userSource);
+        }
+        return user;
+    }
+
+    private void pushToKafka(String topic, Payloads payloads) {
+        if (validTopic(topic)) {
+            this.kafka.push(topic, payloads);
+        } else {
+            this.kafka.push(TOPIC, payloads);
+        }
+    }
+
+    private boolean validTopic(String topic) {
+        return topic != null && !topic.isEmpty();
+    }
+}
+```
+It looks clean, it feels clean but is it really clean? After all the work
+of decomposing a problem into smaller pieces we still end up writing procedures
+that can potentially lead to a mess. You may say, "Well, this is perfectly fine, we eventually need to write
+procedures somewhere. Java is not entirely OOP nor functional language", and I agree.
+Whe cannot get rid of procedural code, but we can isolate procedural peaces by moving more to OOP direction.
+
+Let's first examine what is wrong with the code above:
+
+
 
 
 ## Declarative factories
