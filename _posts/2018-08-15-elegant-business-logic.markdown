@@ -8,8 +8,7 @@ fig-caption: # Add figcaption (optional)
 tags: [Java, OOP, Business Logic]
 ---
 
-Imagine a simple method that contains some business logic. A method that depicts an use case
-in a system. Let's say we have a case where we have to store some payloads to a user devices and send them to a messaging queue.
+Let's say we have an use case where we want to store some payloads to user devices and send them to a messaging queue.
 How would you model this case? I think it would probably contain
 some procedural steps backed up with decoupled parts of functionality such as services and
 repositories or some other objects.  The use case could pretty much look like this:
