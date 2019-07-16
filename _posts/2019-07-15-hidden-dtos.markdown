@@ -69,8 +69,8 @@ class Patient {
     
     private String ssn, address;
     // stuff
-    <T> T print(Function<PatientContent, Printable<T> media) {
-        return media.apply(new PatientContent(ssn, address)).print();
+    <T> T print(Function<PatientContent, Printable<T> output) {
+        return output.apply(new PatientContent(ssn, address)).print();
     }
 }
 """
@@ -97,9 +97,9 @@ public class PatientContent
 """
 
 """java
-public class JsonPatientPrintout extends PatientContent implements Printable<JsonObject>
+public class JsonPatientOutput extends PatientContent implements Printable<JsonObject>
 {
-    public JsonPatientPrintout(PatientContent content)
+    public JsonPatientOutput(PatientContent content)
     {
         super(content);
     }
@@ -114,19 +114,58 @@ public class JsonPatientPrintout extends PatientContent implements Printable<Jso
     }
 }
 """
-
 Now we print the patient to json:
 """java
-JsonObject json = patient.print(JsonPatientPrintout:new);
+JsonObject json = patient.print(JsonPatientOutput::new);
 """
+This is basically extended version of printer/media pattern. You may find this 
+sharing data between derived classes scary but I assure you its perfectly fine.
+We are not exposing protected fields outside of the printer context. 
+No object other than printer itself can access PatientContent and JsonPatientOutput instances.
 
-Let's play a little bit more and 
-The fun part is that there are no harm in using the dto in such a manner. It cannot be used outside
-of a printer context. Getters cannot leak to other parts of the application. You don't even need to
-hold PatientContent in a separate package to avoid package access because no one other than printer can
-get PatientContent instance.
-Bear in mind that such a dto should absolutely be immutable, without exceptions. You don't want your derived class
-to mutate the dto state. 
+
+Let's play a little bit more and assume that patient in the end will hold much more data.
+
+Remember how I said I wont use getters and setters ever again? Well it's time to 
+cheat a little bit because we all know how New Year's resolutions eventually end up. 
+Mine took only... Anyway, embrace yourselves.
+"""java
+public class PatientContent
+{
+    protected final PatientDto dto;
+
+    public PatientContent(PatientContent content) {
+        this(content.dto);
+    }
+
+    public PatientContent(PatientDto dto)
+    {
+        this.dto = dto;
+    }
+}
+
+@Builder
+@ToString
+@Getter
+public class PatientDto
+{
+    @NonNull
+    private final String ssn;
+
+    @NonNull
+    private final String name;
+
+    @NonNull
+    private final String address;
+    
+    //.. other fields
+}
+"""
+Wait, what? 
+The fun part is that there are no harm in using the dto in such a manner. 
+It cannot be used outside of a printer context.
+Bear in mind that such a dto should absolutely be immutable, without exceptions. 
+You don't want your derived class to mutate the dto state. 
 
 Full example can be find here: 
 
