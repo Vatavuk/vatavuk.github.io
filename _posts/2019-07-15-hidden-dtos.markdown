@@ -8,12 +8,16 @@ fig-caption: # Add figcaption (optional)
 tags: [Java, OOP]
 ---
 
-My New Year's resolution came early this year. I will never use data transfer objects in my java
+My New Year's resolution came early this year. I will never use data transfer objects in java
 applications again. No getters and setters anymore, thank you. It was not a pleasure and you wont be missed.
-My pain is not unique, plenty has been said about dtos and getters and setters. 
-They separate data from behaviour and they break encapsulation moving design away from OOP paradigm.
 
-I would like to show you how you can ...
+
+My pain is not unique, plenty has been said about dtos and getters and setters. 
+They break encapsulation and by using it we separate data from behaviour which moves our design away from OOP paradigm.
+
+I would like to show you a concrete example how you can manipulate data without exposing it to
+the rest of the codebase. 
+
 The goal is to clean up our business logic/use cases from unnecessary data exposure. What does it mean?
 Let's take a look at the following data class:
 
@@ -33,12 +37,6 @@ class PatientDto {
 If the use case only uses ssn to verifies patient uniqueness...
 
 
-There are already a few solutions that are worth "checking". 
-One approach is to use arbitrary data structure, such as JsonObject,
-instead of plain java dto to pass data around. In order to access data we
-animate it, expose it through an interface. The point is that if data is changed
-we don't need to update interfaces. The problem with this method is that
-JsonObject is still a dto and we can access it's internals nonetheless.
    
 We have also concept of printers, to let object print itself. 
 
@@ -64,9 +62,9 @@ What if we have additional requirement which ...
 I propose to give the printer pattern some steroids to let user take full control
 of what data should be printed and how.
 
-Let's change the signature a bit: 
+Let's change the signature a (bit - duplication): 
 
-"""
+"""java
 class Patient {
     
     private String ssn, address;
@@ -76,6 +74,59 @@ class Patient {
     }
 }
 """
-It looks a little bit weird but follow me through. Print method now accepts a function
 
+It looks weird but follow me through. Print method now accepts a function
+
+
+"""java
+public class PatientContent
+{
+    protected final String ssn;
+    
+    protected final String address;
+
+    public PatientContent(PatientContent content) {
+        this(content.ssn, content.address);
+    }
+
+    public PatientContent(String ssn, String address)
+    {
+        this.dto = dto;
+    }
+}
+"""
+
+"""java
+public class JsonPatientPrintout extends PatientContent implements Printable<JsonObject>
+{
+    public JsonPatientPrintout(PatientContent content)
+    {
+        super(content);
+    }
+
+    @Override
+    public JsonObject print()
+    {
+        return Json.createObjectBuilder().
+            .add("ssn", this.ssn)
+            .add("address", this.address)
+            .build();
+    }
+}
+"""
+
+Now we print the patient to json:
+"""java
+JsonObject json = patient.print(JsonPatientPrintout:new);
+"""
+
+Let's play a little bit more and 
+The fun part is that there are no harm in using the dto in such a manner. It cannot be used outside
+of a printer context. Getters cannot leak to other parts of the application. You don't even need to
+hold PatientContent in a separate package to avoid package access because no one other than printer can
+get PatientContent instance.
+Bear in mind that such a dto should absolutely be immutable, without exceptions. You don't want your derived class
+to mutate the dto state. 
+
+Full example can be find here: 
 
