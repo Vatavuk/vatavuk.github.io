@@ -10,10 +10,11 @@ tags: [Java, OOP]
 
 My New Year's resolution came early this year. I will never use data transfer objects in java
 applications again. No getters and setters anymore, thank you. It was not a pleasure and you wont be missed.
+Actually, this was my resolution from two years ago and since than I've tried various tehniques to substitute dtos with
+more object-oriented design. In this article I will share you my experience and concrete examples... 
 
-
-My pain is not unique, plenty has been said about dtos and getters and setters. 
-They break encapsulation and by using it we separate data from behaviour which moves our design away from OOP paradigm.
+First of all, why are dtos bad? Well, quite a loot has been said on that subject.
+The main problem is that they break encapsulation. By using them we separate data from behaviour which moves our design away from OOP paradigm.
 
 I would like to show you a concrete example how you can manipulate data without exposing it to
 the rest of the codebase. 
